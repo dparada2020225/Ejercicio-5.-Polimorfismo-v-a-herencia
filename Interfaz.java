@@ -6,29 +6,35 @@
 * FECHA: 26/09/2024 
 * DESCRIPCION: Clase que interactúa con el usuario para ingresar y calcular el presupuesto necesario para aceptar un animal.
 */
+import java.io.IOException;
 import java.util.Scanner;
 
 public class Interfaz {
     public static void main(String[] args) {
+        Gestionador gestionador = new Gestionador();
         Scanner scanner = new Scanner(System.in);
 
-        // Paso 1: Ingresar el presupuesto anual
+        // Cargar los datos desde el archivo CSV al iniciar el programa
+        if (gestionador.cargarDesdeCSV("animales.csv")) {
+            System.out.println("Datos cargados correctamente o archivo creado.");
+        } else {
+            System.out.println("Error al cargar o crear el archivo CSV.");
+        }
+
+        // Ingresar el presupuesto anual
         System.out.print("Ingrese el presupuesto anual: ");
         double presupuesto = scanner.nextDouble();
         scanner.nextLine();  // Consumir el salto de línea
 
-        // Paso 2: Preguntar si es felino o primate
+        // Preguntar si es felino o primate
         System.out.print("¿El animal es un Felino o Primate? (F/P): ");
         char tipoAnimal = scanner.nextLine().toUpperCase().charAt(0);
 
         Mamifero mamifero = null;  // Declarar el mamífero
 
         if (tipoAnimal == 'F') {
-            // Si es felino, ingresar datos específicos del felino
-            System.out.println("\n============================");
-            System.out.println("  Ingrese los datos del felino");
-            System.out.println("============================");
-
+            // Ingresar datos del felino
+            System.out.println("Ingrese los datos del felino:");
             System.out.print("Nombre científico: ");
             String nombreCientifico = scanner.nextLine();
             System.out.print("Hábitat: ");
@@ -47,7 +53,7 @@ public class Interfaz {
             System.out.print("¿Está en peligro de extinción? (true/false): ");
             boolean enPeligro = scanner.nextBoolean();
             scanner.nextLine();  // Consumir el salto de línea
-            System.out.print("Dieta (Carnivoro/Omnívoro): ");
+            System.out.print("Dieta (Carnivoro/Omnivoro): ");
             String dieta = scanner.nextLine();
             System.out.print("Especie: ");
             String especie = scanner.nextLine();
@@ -56,15 +62,12 @@ public class Interfaz {
             System.out.print("Velocidad máxima (km/h): ");
             double velocidadMaxima = scanner.nextDouble();
 
-            // Crear el felino con los datos ingresados
+            // Crear el felino
             mamifero = new Felinos(nombreCientifico, habitat, esperanzaDeVida, tipoPelaje, cantidadCrias, peso, tiempoGestacion, enPeligro, dieta, especie, longitudCola, velocidadMaxima);
 
         } else if (tipoAnimal == 'P') {
-            // Si es primate, ingresar datos específicos del primate
-            System.out.println("\n============================");
-            System.out.println("  Ingrese los datos del primate");
-            System.out.println("============================");
-
+            // Ingresar datos del primate
+            System.out.println("Ingrese los datos del primate:");
             System.out.print("Nombre científico: ");
             String nombreCientifico = scanner.nextLine();
             System.out.print("Hábitat: ");
@@ -105,7 +108,7 @@ public class Interfaz {
         // Mostrar los datos del animal ingresado
         imprimirDatosMamiferoBonitos(mamifero.toString());
 
-        // Paso 3: Calcular si el presupuesto es suficiente
+        // Calcular si el presupuesto es suficiente
         double costoRecinto = mamifero.calcularEspacioRecintoValor() * 13000;  // Costo del recinto (13000 por metro)
         double costoComidaAnual = mamifero.calcularCostoComidaAnual();  // Costo anual de la comida
         double costoMantenimientoDiario = (mamifero.calcularEspacioRecintoValor() > 100) ? 400 : ((mamifero.calcularEspacioRecintoValor() > 50) ? 250 : 100);  // Costo de mantenimiento diario
@@ -121,7 +124,7 @@ public class Interfaz {
         System.out.println("Costo de mantenimiento anual: Q" + costoMantenimientoAnual);
         System.out.println("Costo total anual: Q" + costoTotalAnual);
 
-        // Paso 4: Determinar si el presupuesto alcanza
+        // Determinar si el presupuesto alcanza
         System.out.println("\n============================");
         System.out.println("  Recomendación");
         System.out.println("============================");
@@ -132,18 +135,26 @@ public class Interfaz {
             System.out.println("Recomendación: El presupuesto no alcanza. Se recomienda no aceptar al animal.");
         }
 
-        // Paso 5: Preguntar si el usuario aceptará al animal
+        //Preguntar si el usuario aceptará al animal
         System.out.print("¿Desea aceptar al animal? (S/N): ");
         char aceptar = scanner.next().toUpperCase().charAt(0);
 
-        // Paso 6: Mostrar mensaje final
-        System.out.println("\n============================");
-        System.out.println("  Resultado ");
-        System.out.println("============================");
+        //Si el animal es aceptado, guardar en el archivo CSV
         if (aceptar == 'S') {
-            System.out.println("El animal SI ha sido aceptado.");
+            System.out.println("\nEl animal ha sido aceptado.");
+            try {
+                if (mamifero instanceof Felinos) {
+                    gestionador.agregarFelino(mamifero.getNombreCientifico(), (Felinos) mamifero);
+                } else if (mamifero instanceof Primates) {
+                    gestionador.agregarPrimate(mamifero.getNombreCientifico(), (Primates) mamifero);
+                }
+                gestionador.guardarEnCSV("animales.csv");
+                System.out.println("Datos guardados en animales.csv");
+            } catch (IOException e) {
+                System.out.println("Error al guardar los datos: " + e.getMessage());
+            }
         } else {
-            System.out.println("El animal NO ha sido aceptado.");
+            System.out.println("\nEl animal NO ha sido aceptado.");
         }
 
         scanner.close();

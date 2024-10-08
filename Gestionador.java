@@ -1,11 +1,4 @@
-/**
-* UNIVERSIDAD DEL VALLE DE GUATEMALA
-* DEPARTAMENTO DE CIENCIA DE LA COMPUTACION 
-* CC2008
-* AUTOR: Denil Parada
-* FECHA: 26/09/2024 
-* DESCRIPCION: Clase que gestiona las operaciones de los mamíferos, tales como calcular espacio, alimento diario, y registrar ejemplares.
-*/
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,23 +28,70 @@ public class Gestionador {
         }
     }
 
-    // Método para calcular el espacio del recinto
-    public String calcularEspacioRecinto(String clave) {
-        if (mamiferos.containsKey(clave)) {
-            Mamifero mamifero = mamiferos.get(clave);
-            double espacio = mamifero.calcularEspacioRecintoValor();
-            return "El espacio necesario del recinto es: " + espacio + " metros cuadrados.";
+    // Método para guardar datos en CSV solo si el animal es aceptado
+    public void guardarEnCSV(String nombreArchivo) throws IOException {
+        File file = new File(nombreArchivo);
+        boolean archivoExistente = file.exists();
+        
+        BufferedWriter writer = new BufferedWriter(new FileWriter(nombreArchivo, true)); // Modo 'append' para no sobrescribir
+        if (!archivoExistente) {
+            // Si el archivo no existe, crearlo con encabezados
+            writer.write("Tipo,Nombre Científico,Hábitat,Esperanza de Vida,Tipo Pelaje,Cantidad Crías,Peso,Tiempo Gestación,En Peligro Extinción,Dieta,Especie,Longitud Cola/Inteligencia,Velocidad/Tamaño Cerebro\n");
         }
-        return "Mamífero no encontrado o no aplicable para cálculo de espacio.";
+
+        for (Mamifero mamifero : mamiferos.values()) {
+            if (mamifero instanceof Felinos) {
+                Felinos felino = (Felinos) mamifero;
+                writer.write("Felino," + felino.getNombreCientifico() + "," + felino.getHabitat() + "," + felino.getEsperanzaDeVida() + "," +
+                             felino.getTipoPelaje() + "," + felino.getCantidadCrias() + "," + felino.getPeso() + "," + felino.getTiempoDeGestacion() + "," +
+                             felino.isEnPeligroDeExtincion() + "," + felino.getDieta() + "," + felino.getEspecie() + "," + felino.getLongitudCola() + "," +
+                             felino.getVelocidadMaxima() + "\n");
+            } else if (mamifero instanceof Primates) {
+                Primates primate = (Primates) mamifero;
+                writer.write("Primate," + primate.getNombreCientifico() + "," + primate.getHabitat() + "," + primate.getEsperanzaDeVida() + "," +
+                             primate.getTipoPelaje() + "," + primate.getCantidadCrias() + "," + primate.getPeso() + "," + primate.getTiempoDeGestacion() + "," +
+                             primate.isEnPeligroDeExtincion() + "," + primate.getDieta() + "," + primate.getEspecie() + "," + primate.getEstructuraSocial() + "," +
+                             primate.getNivelInteligencia() + "," + primate.getTamanoCerebro() + "\n");
+            }
+        }
+        writer.close();
     }
 
-    // Método para calcular la cantidad de alimento diario
-    public String calcularAlimento(String clave) {
-        if (mamiferos.containsKey(clave)) {
-            Mamifero mamifero = mamiferos.get(clave);
-            double costoComidaAnual = mamifero.calcularCostoComidaAnual();
-            return "El costo de la comida anual es: Q" + costoComidaAnual;
+    // Método para cargar datos desde CSV y verificar si hay algún problema al cargar o crear el archivo
+    public boolean cargarDesdeCSV(String nombreArchivo) {
+        File file = new File(nombreArchivo);
+        if (!file.exists()) {
+            // Si el archivo no existe, crear el archivo con encabezados
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(nombreArchivo))) {
+                writer.write("Tipo,Nombre Científico,Hábitat,Esperanza de Vida,Tipo Pelaje,Cantidad Crías,Peso,Tiempo Gestación,En Peligro Extinción,Dieta,Especie,Longitud Cola/Inteligencia,Velocidad/Tamaño Cerebro\n");
+                return true; // Indica que el archivo fue creado
+            } catch (IOException e) {
+                return false; // Indica que ocurrió un error
+            }
         }
-        return "Mamífero no encontrado o no aplicable para cálculo de alimento.";
+
+        // Si el archivo existe, cargar los datos
+        try (BufferedReader reader = new BufferedReader(new FileReader(nombreArchivo))) {
+            String linea;
+            reader.readLine(); // Saltar la primera línea (encabezados)
+            while ((linea = reader.readLine()) != null) {
+                String[] datos = linea.split(",");
+                String tipo = datos[0];
+                if (tipo.equals("Felino")) {
+                    Felinos felino = new Felinos(datos[1], datos[2], Integer.parseInt(datos[3]), datos[4], Integer.parseInt(datos[5]), 
+                                                 Double.parseDouble(datos[6]), Integer.parseInt(datos[7]), Boolean.parseBoolean(datos[8]), datos[9], 
+                                                 datos[10], Integer.parseInt(datos[11]), Double.parseDouble(datos[12]));
+                    mamiferos.put(datos[1], felino);
+                } else if (tipo.equals("Primate")) {
+                    Primates primate = new Primates(datos[1], datos[2], Integer.parseInt(datos[3]), datos[4], Integer.parseInt(datos[5]), 
+                                                    Double.parseDouble(datos[6]), Integer.parseInt(datos[7]), Boolean.parseBoolean(datos[8]), datos[9], 
+                                                    datos[10], datos[11], Integer.parseInt(datos[12]), Double.parseDouble(datos[13]));
+                    mamiferos.put(datos[1], primate);
+                }
+            }
+            return true; // Indica que los datos fueron cargados correctamente
+        } catch (IOException e) {
+            return false; // Indica que ocurrió un error al cargar los datos
+        }
     }
 }
